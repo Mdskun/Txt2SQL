@@ -8,7 +8,6 @@ from typing import List, Tuple, Any
 
 logger = logging.getLogger(__name__)
 
-
 class DatabaseManager:
     """Manages SQLite database connections and operations."""
     

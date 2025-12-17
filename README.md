@@ -1,45 +1,99 @@
-# Txt2SQL
+<div align="center">
 
-> Convert natural language questions into SQL queries using AI
+# 🔮 Txt2SQL
 
-A simple, offline tool that uses T5 transformer model to convert English questions into SQL queries and execute them on your SQLite database.
+### *Transform Natural Language into SQL Queries with AI*
+
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![AI Powered](https://img.shields.io/badge/AI-T5%20Transformer-orange.svg)](https://huggingface.co/mrm8488/t5-small-finetuned-wikiSQL)
+
+[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Examples](#-examples) • [Contributing](#-contributing)
+
+---
+
+</div>
+
+## 📖 About
+
+**Txt2SQL** is an intelligent command-line tool that converts your natural language questions into SQL queries and executes them on your SQLite database. No need to remember complex SQL syntax—just ask in plain English!
+
+### 🎯 Perfect For
+
+- 📊 Quick database queries without writing SQL
+- 🎓 Learning SQL by seeing generated queries
+- 🔍 Data exploration and analysis
+- 🛠️ Rapid prototyping and testing
+
+---
 
 ## ✨ Features
 
-- 🤖 **AI-Powered**: Uses T5 model fine-tuned on WikiSQL
-- 💾 **Offline**: Works completely offline, no API calls
-- 🔒 **Local**: All data stays on your machine
-- ⚡ **CPU-Optimized**: Efficient CPU inference
-- 🎯 **Schema-Aware**: Automatically reads database schema
-- 🖥️ **Interactive CLI**: User-friendly command-line interface
-- ⚠️ **Safe**: Warns before executing dangerous operations
+<table>
+<tr>
+<td width="50%">
 
-## 📋 Requirements
+### 🤖 **AI-Powered**
+Uses fine-tuned T5 transformer model for accurate SQL generation
+
+### 🔒 **100% Local**
+All processing happens on your machine—no API calls, no data sharing
+
+### ⚡ **CPU Optimized**
+Efficient inference designed for everyday computers
+
+</td>
+<td width="50%">
+
+### 🎨 **Beautiful CLI**
+Interactive interface with colors, autocomplete, and command history
+
+### 🛡️ **Safe by Design**
+Warns before executing dangerous operations like DELETE or DROP
+
+### 📊 **Smart Schema Detection**
+Automatically reads and understands your database structure
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🚀 Installation
+
+### Prerequisites
 
 - Python 3.8 or higher
-- SQLite3
 - 2GB+ RAM recommended
+- SQLite database
 
-## 🚀 Quick Start
-
-### 1. Clone the Repository
+### Step 1: Clone the Repository
 
 ```bash
 git clone https://github.com/yourusername/Txt2SQL.git
 cd Txt2SQL
 ```
 
-### 2. Install Dependencies
+### Step 2: Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Download the Model
+### Step 3: Download T5 Model
 
-Download the T5-WikiSQL model from [HuggingFace](https://huggingface.co/mrm8488/t5-small-finetuned-wikiSQL) and save it locally.
+Download the pre-trained model from HuggingFace:
 
-### 4. Configure Environment
+```bash
+# Using git-lfs
+git lfs install
+git clone https://huggingface.co/mrm8488/t5-small-finetuned-wikiSQL
+```
+
+Or download manually from: [HuggingFace Model Hub](https://huggingface.co/mrm8488/t5-small-finetuned-wikiSQL)
+
+### Step 4: Configure Environment
 
 ```bash
 cp .env.example .env
@@ -48,128 +102,256 @@ cp .env.example .env
 Edit `.env` and set your model path:
 
 ```env
-WIKISQL_MODEL=/path/to/your/t5-model
-DB_PATH=mydb.db
+WIKISQL_MODEL=/path/to/t5-small-finetuned-wikiSQL
 ```
 
-### 5. Run
+---
+
+## 💻 Usage
+
+### Starting the Application
+
+Simply run:
 
 ```bash
 python txt2sql.py
 ```
 
-## 📖 Usage
+The program will:
+1. ✅ Load the AI model
+2. 📂 Ask you to select a database
+3. 🎯 Start the interactive session
 
-### Interactive Mode
-
-Run without arguments for interactive mode:
-
-```bash
-python txt2sql.py
-```
-
-Example session:
+### Interactive Session
 
 ```
-Query> show all customers from California
-Generated SQL: SELECT * FROM customers WHERE state = 'California'
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║  ████████╗██╗  ██╗████████╗██████╗ ███████╗ ██████╗ ██╗         ║
+║  ╚══██╔══╝╚██╗██╔╝╚══██╔══╝╚════██╗██╔════╝██╔═══██╗██║         ║
+║     ██║    ╚███╔╝    ██║    █████╔╝███████╗██║   ██║██║         ║
+║     ██║    ██╔██╗    ██║   ██╔═══╝ ╚════██║██║▄▄ ██║██║         ║
+║     ██║   ██╔╝ ██╗   ██║   ███████╗███████║╚██████╔╝███████╗    ║
+║     ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝ ╚══▀▀═╝ ╚══════╝    ║
+║                                                                  ║
+║              Natural Language to SQL Query Converter             ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
 
-│ id  │ name          │ state       │
-──────────────────────────────────────
-│ 1   │ John Doe      │ California  │
-│ 2   │ Jane Smith    │ California  │
+✓ Model loaded
+✓ Database: mydb.db
+✓ Tables: customers, orders, products
 
-(2 rows)
+❯ show me all customers from California
 ```
 
-### Single Query Mode
+---
 
-Execute a single query and exit:
+## 🎮 Commands
 
-```bash
-python txt2sql.py --query "how many products do we have"
+| Command | Description |
+|---------|-------------|
+| `?` or `help` | Show help message |
+| `schema` | Display database schema |
+| `tables` | List all tables |
+| `clear` | Clear the screen |
+| `exit` or `quit` | Exit the program |
+
+### 💡 Features
+
+- **↑↓ Arrow Keys**: Navigate command history
+- **Tab**: Autocomplete commands
+- **Ctrl+R**: Search command history (if prompt-toolkit installed)
+
+---
+
+## 📝 Examples
+
+### Example 1: Simple Query
+
+```
+❯ show all customers
+
+Generated SQL:
+SELECT * FROM customers
+
+│ id  │ name          │ email                │ state       │
+─────────────────────────────────────────────────────────────
+│ 1   │ John Doe      │ john@example.com     │ California  │
+│ 2   │ Jane Smith    │ jane@example.com     │ New York    │
+│ 3   │ Bob Johnson   │ bob@example.com      │ Texas       │
+
+(3 rows)
 ```
 
-### View Database Schema
+### Example 2: Filtered Query
 
-```bash
-python txt2sql.py --show-schema
+```
+❯ how many customers are from California?
+
+Generated SQL:
+SELECT COUNT(*) FROM customers WHERE state = 'California'
+
+│ COUNT(*) │
+────────────
+│ 15       │
+
+(1 row)
 ```
 
-### Custom Database
+### Example 3: Join Query
 
-```bash
-python txt2sql.py --database /path/to/database.db
+```
+❯ show customer names and their order counts
+
+Generated SQL:
+SELECT customers.name, COUNT(orders.id) 
+FROM customers 
+LEFT JOIN orders ON customers.id = orders.customer_id 
+GROUP BY customers.name
+
+│ name          │ COUNT(orders.id) │
+────────────────────────────────────
+│ John Doe      │ 5                │
+│ Jane Smith    │ 3                │
+│ Bob Johnson   │ 7                │
+
+(3 rows)
 ```
 
-### Verbose Mode
-
-```bash
-python txt2sql.py --verbose
-```
-
-## 🎯 Commands
-
-In interactive mode:
-
-- Type your question in natural language
-- `schema` - Show database schema
-- `tables` - List all tables
-- `exit` or `quit` - Exit the program
+---
 
 ## 🏗️ Project Structure
 
 ```
 Txt2SQL/
-├── config.py          # Configuration management
-├── database.py        # Database operations
-├── generator.py       # SQL generation with T5
-├── cli.py             # Command-line interface
-├── utils.py           # Utility functions
-├── txt2sql.py         # Main entry point
-├── requirements.txt   # Dependencies
-├── .env.example       # Environment template
-└── README.md          # This file
+├── 📄 config.py              # Configuration management
+├── 📄 database.py            # Database operations
+├── 📄 generator.py           # SQL generation with T5
+├── 📄 cli.py                 # Interactive CLI interface
+├── 📄 utils.py               # Utility functions
+├── 📄 txt2sql.py             # Main entry point
+│
+├── 📋 requirements.txt       # Python dependencies
+├── 📋 requirements-dev.txt   # Development dependencies
+├── 🧪 test_basic.py          # Unit tests
+│
+├── 📝 .env.example           # Environment template
+├── 📝 .gitignore             # Git ignore rules
+├── 📝 LICENSE                # License file
+└── 📝 README.md              # This file
 ```
-
-## ⚙️ Configuration
-
-Environment variables in `.env`:
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `WIKISQL_MODEL` | Path to T5 model | Required |
-| `DB_PATH` | Path to SQLite database | `mydb.db` |
-| `MAX_SQL_LENGTH` | Maximum SQL length | `128` |
-| `NUM_BEAMS` | Beam search beams | `2` |
-| `TORCH_THREADS` | CPU threads | `2` |
-| `LOG_LEVEL` | Logging level | `INFO` |
-
-## 🔒 Security Features
-
-- **Dangerous Operation Warnings**: Prompts before executing DROP, DELETE, TRUNCATE, or ALTER
-- **Read-only Queries**: Safe for SELECT queries
-- **Input Validation**: Validates all inputs
-- **Error Handling**: Comprehensive error handling
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📝 License
-
-This project is licensed under the terms specified in the [LICENSE](LICENSE) file.
-
-## 🙏 Acknowledgments
-
-- [T5 Model](https://github.com/google-research/text-to-text-transfer-transformer) by Google Research
-- [WikiSQL Dataset](https://github.com/salesforce/WikiSQL)
-- [Hugging Face Transformers](https://github.com/huggingface/transformers)
-
-## 📞 Support
-
-For issues and questions, please use the [GitHub Issues](https://github.com/yourusername/Txt2SQL/issues) page.
 
 ---
 
-**Note**: This tool is for educational and development purposes. Always validate generated SQL queries before executing them on production databases.
+## 🛡️ Safety Features
+
+| Feature | Description |
+|---------|-------------|
+| ⚠️ **Dangerous Operation Warnings** | Prompts confirmation before DELETE, DROP, TRUNCATE, ALTER |
+| ✅ **Input Validation** | Validates all user inputs and SQL queries |
+| 🔍 **Query Preview** | Shows generated SQL before execution |
+| 📝 **Error Messages** | Clear, helpful error messages |
+
+---
+
+## 🎨 Customization
+
+### Environment Variables
+
+Only one required variable in `.env`:
+
+```env
+WIKISQL_MODEL=/path/to/model
+```
+
+### Model Parameters
+
+You can adjust these in `config.py`:
+
+```python
+self.max_length = 128      # Maximum SQL length
+self.num_beams = 2         # Beam search beams
+self.torch_threads = 2     # CPU threads
+```
+
+---
+
+## 🧪 Development
+
+### Install Development Dependencies
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+### Run Tests
+
+```bash
+pytest test_basic.py -v
+```
+
+### Code Formatting
+
+```bash
+black *.py
+ruff check *.py
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Here's how you can help:
+
+1. 🍴 Fork the repository
+2. 🔧 Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. 💾 Commit your changes (`git commit -m 'Add amazing feature'`)
+4. 📤 Push to the branch (`git push origin feature/amazing-feature`)
+5. 🎉 Open a Pull Request
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **[Google Research](https://github.com/google-research/text-to-text-transfer-transformer)** - T5 Transformer Model
+- **[Salesforce](https://github.com/salesforce/WikiSQL)** - WikiSQL Dataset
+- **[Hugging Face](https://huggingface.co)** - Transformers Library
+- **[Manuel Romero](https://huggingface.co/mrm8488)** - Fine-tuned WikiSQL Model
+
+---
+
+## 📞 Support
+
+<div align="center">
+
+**Found a bug?** [Open an issue](https://github.com/yourusername/Txt2SQL/issues)
+
+**Have a question?** [Start a discussion](https://github.com/yourusername/Txt2SQL/discussions)
+
+**Love the project?** Give it a ⭐ on GitHub!
+
+</div>
+
+---
+
+<div align="center">
+
+### 🚀 **Ready to get started?**
+
+```bash
+git clone https://github.com/yourusername/Txt2SQL.git
+cd Txt2SQL
+pip install -r requirements.txt
+python txt2sql.py
+```
+
+**Made with ❤️ and 🤖 by the Txt2SQL Team**
+
+</div>

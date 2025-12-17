@@ -2,7 +2,11 @@
 """
 Txt2SQL - Convert natural language to SQL queries.
 
-This is the main entry point that delegates to the CLI module.
+A beautiful, interactive CLI tool that uses AI to transform your questions
+into SQL queries and execute them on your SQLite database.
+
+Author: Manthan D Soni
+License: MIT
 """
 from cli import main
 

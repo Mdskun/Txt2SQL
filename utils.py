@@ -3,7 +3,13 @@ Utility functions for Txt2SQL.
 """
 import logging
 import sys
+import os
 from typing import Any, Union, Dict, List
+
+
+def clear_screen() -> None:
+    """Clear the terminal screen."""
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 
 class Colors:
@@ -109,6 +115,7 @@ def format_table(columns: List[str], rows: List[tuple]) -> str:
 
 
 def validate_sql(sql: str) -> bool:
+    logging.debug(f"Validating SQL: {sql}")
     """
     Basic SQL validation.
     

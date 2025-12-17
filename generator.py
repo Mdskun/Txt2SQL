@@ -5,19 +5,19 @@ import os
 import logging
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-
 class SQLGenerator:
-    """Generates SQL queries from natural language using T5 model."""
+    """
+    Generates SQL queries from natural language using T5 model.
+    """
     
     def __init__(
         self,
         model_path: str,
         max_length: int = 128,
-        num_beams: int = 2,
+        num_beams: int = 3,
         torch_threads: int = 2
     ):
         """
@@ -26,7 +26,7 @@ class SQLGenerator:
         Args:
             model_path: Path to the T5 model directory
             max_length: Maximum length of generated SQL
-            num_beams: Number of beams for beam search
+            num_beams: Number of beams for beam search(removed because of issues)
             torch_threads: Number of torch CPU threads
         """
         self.model_path = model_path
@@ -72,8 +72,7 @@ class SQLGenerator:
             raise ValueError("Question cannot be empty")
         
         # Prepare input
-        input_text = f"{schema}\nQuestion: {question.strip()}"
-        
+        input_text = f"translate to SQL: {question.strip()} | {schema}"
         try:
             # Tokenize
             inputs = self.tokenizer.encode(
@@ -89,18 +88,20 @@ class SQLGenerator:
                     inputs,
                     max_length=self.max_length,
                     num_beams=self.num_beams,
-                    early_stopping=True
+                    early_stopping=True,
+                    no_repeat_ngram_size=3,
+                    repetition_penalty=1.2
                 )
             
             # Decode
             sql = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-            
             # Basic validation
             sql = sql.strip()
+            sql = sql.split('|', 1)[0]
             if not sql:
                 raise ValueError("Model generated empty SQL")
             
-            logger.debug(f"Generated SQL: {sql}")
+            logger.debug(f"Generated SQL: {sql[0]}")
             return sql
         
         except Exception as e:

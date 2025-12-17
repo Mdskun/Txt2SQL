@@ -1,82 +1,143 @@
 """
-Command-line interface for Txt2SQL.
+Command-line interface for Txt2SQL with interactive features.
 """
 import sys
-import argparse
+import os
 import logging
-from typing import Optional
 from pathlib import Path
+from typing import Optional, List
+
+try:
+    from prompt_toolkit import prompt
+    from prompt_toolkit.completion import WordCompleter
+    from prompt_toolkit.history import InMemoryHistory
+    from prompt_toolkit.styles import Style
+    PROMPT_TOOLKIT_AVAILABLE = True
+except ImportError:
+    PROMPT_TOOLKIT_AVAILABLE = False
 
 from config import Config
 from database import DatabaseManager
 from generator import SQLGenerator
-from utils import setup_logging, format_results, Colors
+from utils import setup_logging, format_results, Colors, clear_screen
 
 
-def create_parser() -> argparse.ArgumentParser:
-    """Create and configure argument parser."""
-    parser = argparse.ArgumentParser(
-        description="Convert natural language to SQL queries",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Interactive mode
-  python txt2sql.py
-  
-  # Single query
-  python txt2sql.py --query "show all customers"
-  
-  # Custom database
-  python txt2sql.py --database /path/to/db.sqlite
-  
-  # Verbose output
-  python txt2sql.py --verbose
-        """
-    )
+def get_database_path() -> str:
+    """Prompt user for database path."""
+    print(f"\n{Colors.CYAN}╔════════════════════════════════════════════════════════════╗{Colors.RESET}")
+    print(f"{Colors.CYAN}║{Colors.RESET}  {Colors.BOLD}Database Selection{Colors.RESET}                                        {Colors.CYAN}║{Colors.RESET}")
+    print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════╝{Colors.RESET}\n")
     
-    parser.add_argument(
-        "-d", "--database",
-        help="Path to SQLite database file",
-        type=str
-    )
+    # List .db files in current directory
+    db_files = list(Path('.').glob('*.db'))
     
-    parser.add_argument(
-        "-m", "--model",
-        help="Path to T5 model directory",
-        type=str
-    )
+    if db_files:
+        print(f"{Colors.YELLOW}Found database files:{Colors.RESET}")
+        for i, db in enumerate(db_files, 1):
+            print(f"  {Colors.GREEN}{i}.{Colors.RESET} {db.name}")
+        print()
     
-    parser.add_argument(
-        "-q", "--query",
-        help="Single query to execute (non-interactive)",
-        type=str
-    )
+    while True:
+        if db_files:
+            db_input = input(f"{Colors.BOLD}Enter database path or number [1-{len(db_files)}]:{Colors.RESET} ").strip()
+            
+            # Check if user entered a number
+            if db_input.isdigit():
+                idx = int(db_input) - 1
+                if 0 <= idx < len(db_files):
+                    return str(db_files[idx])
+        else:
+            db_input = input(f"{Colors.BOLD}Enter database path:{Colors.RESET} ").strip()
+        
+        # Check if file exists
+        if Path(db_input).exists():
+            return db_input
+        
+        print(f"{Colors.RED}✗ Database not found: {db_input}{Colors.RESET}")
+        print(f"{Colors.YELLOW}Please enter a valid database path{Colors.RESET}\n")
+
+
+def show_welcome_banner():
+    """Display welcome banner."""
+    clear_screen()
+    banner = f"""
+{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║  {Colors.BOLD}████████╗██╗  ██╗████████╗██████╗ ███████╗ ██████╗ ██╗     {Colors.RESET}{Colors.CYAN}     ║
+║  {Colors.BOLD}╚══██╔══╝╚██╗██╔╝╚══██╔══╝╚════██╗██╔════╝██╔═══██╗██║     {Colors.RESET}{Colors.CYAN}     ║
+║  {Colors.BOLD}   ██║    ╚███╔╝    ██║    █████╔╝███████╗██║   ██║██║     {Colors.RESET}{Colors.CYAN}     ║
+║  {Colors.BOLD}   ██║    ██╔██╗    ██║   ██╔═══╝ ╚════██║██║▄▄ ██║██║     {Colors.RESET}{Colors.CYAN}     ║
+║  {Colors.BOLD}   ██║   ██╔╝ ██╗   ██║   ███████╗███████║╚██████╔╝███████╗{Colors.RESET}{Colors.CYAN}     ║
+║  {Colors.BOLD}   ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝ ╚══▀▀═╝ ╚══════╝{Colors.RESET}{Colors.CYAN}     ║
+║                                                                  ║
+║            {Colors.YELLOW}Natural Language to SQL Query Converter{Colors.RESET}{Colors.CYAN}               ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝{Colors.RESET}
+"""
+    print(banner)
+
+
+def show_status(db_path: str, tables: List[str]):
+    """Show current status."""
+    print(f"\n{Colors.GREEN}✓{Colors.RESET} {Colors.BOLD}Model loaded{Colors.RESET}")
+    print(f"{Colors.GREEN}✓{Colors.RESET} {Colors.BOLD}Database:{Colors.RESET} {db_path}")
+    print(f"{Colors.GREEN}✓{Colors.RESET} {Colors.BOLD}Tables:{Colors.RESET} {', '.join(tables)}")
+
+
+def show_commands():
+    """Show available commands."""
+    print(f"\n{Colors.CYAN}╔════════════════════════════════════════════════════════════╗{Colors.RESET}")
+    print(f"{Colors.CYAN}║{Colors.RESET}  {Colors.BOLD}Available Commands{Colors.RESET}                                        {Colors.CYAN}║{Colors.RESET}")
+    print(f"{Colors.CYAN}╠════════════════════════════════════════════════════════════╣{Colors.RESET}")
+    print(f"{Colors.CYAN}║{Colors.RESET}  {Colors.YELLOW}?{Colors.RESET} or {Colors.YELLOW}help{Colors.RESET}      Show this help message                     {Colors.CYAN}║{Colors.RESET}")
+    print(f"{Colors.CYAN}║{Colors.RESET}  {Colors.YELLOW}schema{Colors.RESET}         Show database schema                       {Colors.CYAN}║{Colors.RESET}")
+    print(f"{Colors.CYAN}║{Colors.RESET}  {Colors.YELLOW}tables{Colors.RESET}         List all tables                            {Colors.CYAN}║{Colors.RESET}")
+    print(f"{Colors.CYAN}║{Colors.RESET}  {Colors.YELLOW}clear{Colors.RESET}          Clear screen                               {Colors.CYAN}║{Colors.RESET}")
+    print(f"{Colors.CYAN}║{Colors.RESET}  {Colors.YELLOW}exit{Colors.RESET} or {Colors.YELLOW}quit{Colors.RESET}   Exit the program                           {Colors.CYAN}║{Colors.RESET}")
+    print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════╝{Colors.RESET}")
+    print(f"\n{Colors.BLUE}💡 Tip:{Colors.RESET} Just type your question in plain English!\n")
+
+
+def get_user_input(history: Optional[object] = None) -> str:
+    """
+    Get user input with optional prompt_toolkit features.
     
-    parser.add_argument(
-        "-v", "--verbose",
-        help="Enable verbose output",
-        action="store_true"
-    )
+    Args:
+        history: Command history object
     
-    parser.add_argument(
-        "--show-schema",
-        help="Display database schema and exit",
-        action="store_true"
-    )
-    
-    parser.add_argument(
-        "--version",
-        action="version",
-        version="Txt2SQL 1.0.0"
-    )
-    
-    return parser
+    Returns:
+        User input string
+    """
+    if PROMPT_TOOLKIT_AVAILABLE and history:
+        # Commands for autocomplete
+        commands = ['schema', 'tables', 'clear', 'exit', 'quit', 'help', '?']
+        completer = WordCompleter(commands, ignore_case=True)
+        
+        # Custom style
+        style = Style.from_dict({
+            'prompt': '#00aa00 bold',
+        })
+        
+        try:
+            return prompt(
+                '❯ ',
+                completer=completer,
+                history=history,
+                style=style,
+                enable_history_search=True,
+            ).strip()
+        except (KeyboardInterrupt, EOFError):
+            return 'exit'
+    else:
+        # Fallback to basic input
+        return input(f"{Colors.GREEN}❯{Colors.RESET} ").strip()
 
 
 def interactive_mode(
     generator: SQLGenerator,
     db_manager: DatabaseManager,
-    schema: str
+    schema: str,
+    db_path: str
 ) -> None:
     """
     Run interactive query mode.
@@ -85,49 +146,78 @@ def interactive_mode(
         generator: SQL generator instance
         db_manager: Database manager instance
         schema: Database schema string
+        db_path: Path to database
     """
-    print(f"\n{Colors.CYAN}{'='*60}{Colors.RESET}")
-    print(f"{Colors.BOLD}Txt2SQL Interactive Mode{Colors.RESET}")
-    print(f"{Colors.CYAN}{'='*60}{Colors.RESET}")
-    print(f"\n{Colors.GREEN}✓ Model loaded{Colors.RESET}")
-    print(f"{Colors.GREEN}✓ Database connected{Colors.RESET}")
-    print(f"\n{Colors.YELLOW}Commands:{Colors.RESET}")
-    print("  - Type your question in natural language")
-    print("  - Type 'schema' to show database schema")
-    print("  - Type 'tables' to list all tables")
-    print("  - Type 'exit' or 'quit' to exit")
-    print(f"{Colors.CYAN}{'='*60}{Colors.RESET}\n")
+    show_welcome_banner()
+    show_status(db_path, db_manager.get_tables())
+    show_commands()
+    
+    # Setup history if prompt_toolkit is available
+    history = InMemoryHistory() if PROMPT_TOOLKIT_AVAILABLE else None
+    
+    if not PROMPT_TOOLKIT_AVAILABLE:
+        print(f"{Colors.YELLOW}💡 Install 'prompt-toolkit' for enhanced features (autocomplete, history){Colors.RESET}")
+        print(f"   {Colors.CYAN}pip install prompt-toolkit{Colors.RESET}\n")
     
     query_count = 0
     
     while True:
         try:
             # Get user input
-            user_input = input(f"{Colors.BOLD}Query> {Colors.RESET}").strip()
-            
+            user_input = get_user_input(history)
             if not user_input:
                 continue
             
             # Handle commands
-            if user_input.lower() in ['exit', 'quit', 'q']:
-                print(f"\n{Colors.CYAN}Goodbye!{Colors.RESET}")
+            cmd = user_input.lower()
+            
+            if cmd in ['exit', 'quit', 'q']:
+                logging.info("Exiting interactive mode")
+                print(f"\n{Colors.CYAN}╔════════════════════════════════════════════════════════════╗{Colors.RESET}")
+                print(f"{Colors.CYAN}║{Colors.RESET}  {Colors.YELLOW}Session Summary{Colors.RESET}                                           {Colors.CYAN}║{Colors.RESET}")
+                print(f"{Colors.CYAN}║{Colors.RESET}  Queries executed: {Colors.GREEN}{query_count}{Colors.RESET}                                      {Colors.CYAN}║{Colors.RESET}")
+                print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════╝{Colors.RESET}")
+                print(f"\n{Colors.BOLD}Thank you for using Txt2SQL! 👋{Colors.RESET}\n")
                 break
             
-            elif user_input.lower() == 'schema':
+            elif cmd in ['?', 'help']:
+                show_commands()
+                continue
+            
+            elif cmd == 'schema':
+                print(f"\n{Colors.CYAN}╔════════════════════════════════════════════════════════════╗{Colors.RESET}")
+                print(f"{Colors.CYAN}║{Colors.RESET}  {Colors.BOLD}Database Schema{Colors.RESET}                                           {Colors.CYAN}║{Colors.RESET}")
+                print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════╝{Colors.RESET}")
                 print(f"\n{Colors.YELLOW}{schema}{Colors.RESET}\n")
                 continue
             
-            elif user_input.lower() == 'tables':
+            elif cmd == 'tables':
                 tables = db_manager.get_tables()
-                print(f"\n{Colors.YELLOW}Tables: {', '.join(tables)}{Colors.RESET}\n")
+                print(f"\n{Colors.CYAN}╔════════════════════════════════════════════════════════════╗{Colors.RESET}")
+                print(f"{Colors.CYAN}║{Colors.RESET}  {Colors.BOLD}Tables in Database{Colors.RESET}                                        {Colors.CYAN}║{Colors.RESET}")
+                print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════╝{Colors.RESET}")
+                for i, table in enumerate(tables, 1):
+                    print(f"  {Colors.GREEN}{i}.{Colors.RESET} {table}")
+                print()
                 continue
             
+            elif cmd == 'clear':
+                clear_screen()
+                show_welcome_banner()
+                show_status(db_path, db_manager.get_tables())
+                print()
+                continue
             # Generate SQL
-            print(f"\n{Colors.BLUE}Generating SQL...{Colors.RESET}")
+            print(f"\n{Colors.BLUE}⚙ Generating SQL...{Colors.RESET}")
             sql_query = generator.generate_sql(user_input, schema)
-            print(f"{Colors.GREEN}Generated SQL:{Colors.RESET} {sql_query}\n")
+            logging.info(f"Generated SQL: {sql_query}")
+            print(f"\n{Colors.CYAN}╔════════════════════════════════════════════════════════════╗{Colors.RESET}")
+            print(f"{Colors.CYAN}║{Colors.RESET}  {Colors.BOLD}Generated SQL{Colors.RESET}                                             {Colors.CYAN}║{Colors.RESET}")
+            print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════╝{Colors.RESET}")
+            print(f"{Colors.GREEN}{sql_query}{Colors.RESET}\n")
             
             # Execute query
+            print(f"{Colors.BLUE}⚙ Executing query...{Colors.RESET}\n")
             success, results = db_manager.execute_query(sql_query)
             
             if success:
@@ -137,87 +227,30 @@ def interactive_mode(
                 print(f"{Colors.RED}✗ Error: {results}{Colors.RESET}\n")
         
         except KeyboardInterrupt:
-            print(f"\n\n{Colors.CYAN}Interrupted. Goodbye!{Colors.RESET}")
-            break
+            print(f"\n\n{Colors.YELLOW}Use 'exit' command to quit{Colors.RESET}\n")
+            continue
         
         except Exception as e:
             print(f"{Colors.RED}✗ Error: {e}{Colors.RESET}\n")
             logging.error(f"Interactive mode error: {e}")
-    
-    print(f"\n{Colors.CYAN}Queries executed: {query_count}{Colors.RESET}")
-
-
-def single_query_mode(
-    query: str,
-    generator: SQLGenerator,
-    db_manager: DatabaseManager,
-    schema: str
-) -> int:
-    """
-    Execute a single query and exit.
-    
-    Args:
-        query: Natural language query
-        generator: SQL generator instance
-        db_manager: Database manager instance
-        schema: Database schema string
-    
-    Returns:
-        Exit code (0 for success, 1 for error)
-    """
-    try:
-        print(f"\n{Colors.YELLOW}Question:{Colors.RESET} {query}")
-        
-        # Generate SQL
-        sql_query = generator.generate_sql(query, schema)
-        print(f"{Colors.GREEN}Generated SQL:{Colors.RESET} {sql_query}\n")
-        
-        # Execute query
-        success, results = db_manager.execute_query(sql_query)
-        
-        if success:
-            print(format_results(results))
-            return 0
-        else:
-            print(f"{Colors.RED}✗ Error: {results}{Colors.RESET}")
-            return 1
-    
-    except Exception as e:
-        print(f"{Colors.RED}✗ Error: {e}{Colors.RESET}")
-        logging.error(f"Single query error: {e}")
-        return 1
 
 
 def main() -> int:
     """Main entry point."""
-    parser = create_parser()
-    args = parser.parse_args()
-    
-    # Setup logging
-    log_level = "DEBUG" if args.verbose else "INFO"
-    setup_logging(log_level)
-    
     try:
-        # Load configuration
-        config = Config(
-            model_path=args.model,
-            db_path=args.database,
-            log_level=log_level
-        )
+        # Setup logging
+        setup_logging("INFO")
+        # Load configuration (only model path from env)
+        print(f"\n{Colors.BLUE}⚙ Loading model...{Colors.RESET}")
+        config = Config()
         
-        if args.verbose:
-            print(f"\n{Colors.CYAN}Configuration:{Colors.RESET}")
-            print(f"  Model: {config.model_path}")
-            print(f"  Database: {config.db_path}")
+        # Ask user for database path
+        db_path = get_database_path()
         
         # Initialize database manager
-        db_manager = DatabaseManager(config.db_path)
+        print(f"\n{Colors.BLUE}⚙ Connecting to database...{Colors.RESET}")
+        db_manager = DatabaseManager(db_path)
         schema = db_manager.get_schema()
-        
-        # Show schema and exit if requested
-        if args.show_schema:
-            print(f"\n{Colors.YELLOW}{schema}{Colors.RESET}\n")
-            return 0
         
         # Initialize SQL generator
         generator = SQLGenerator(
@@ -227,19 +260,16 @@ def main() -> int:
             torch_threads=config.torch_threads
         )
         
-        # Run appropriate mode
-        if args.query:
-            return single_query_mode(args.query, generator, db_manager, schema)
-        else:
-            interactive_mode(generator, db_manager, schema)
-            return 0
+        # Run interactive mode
+        interactive_mode(generator, db_manager, schema, db_path)
+        return 0
     
     except KeyboardInterrupt:
         print(f"\n{Colors.CYAN}Interrupted{Colors.RESET}")
         return 130
     
     except Exception as e:
-        print(f"{Colors.RED}✗ Fatal error: {e}{Colors.RESET}")
+        print(f"\n{Colors.RED}✗ Fatal error: {e}{Colors.RESET}")
         logging.error(f"Fatal error: {e}", exc_info=True)
         return 1
 
