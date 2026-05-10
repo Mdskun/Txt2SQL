@@ -127,12 +127,12 @@ The program will:
 ```
 ╔══════════════════════════════════════════════════════════════════╗
 ║                                                                  ║
-║  ████████╗██╗  ██╗████████╗██████╗ ███████╗ ██████╗ ██╗         ║
-║  ╚══██╔══╝╚██╗██╔╝╚══██╔══╝╚════██╗██╔════╝██╔═══██╗██║         ║
-║     ██║    ╚███╔╝    ██║    █████╔╝███████╗██║   ██║██║         ║
-║     ██║    ██╔██╗    ██║   ██╔═══╝ ╚════██║██║▄▄ ██║██║         ║
-║     ██║   ██╔╝ ██╗   ██║   ███████╗███████║╚██████╔╝███████╗    ║
-║     ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝ ╚══▀▀═╝ ╚══════╝    ║
+║  ████████╗██╗  ██╗████████╗██████╗ ███████╗ ██████╗ ██╗          ║
+║  ╚══██╔══╝╚██╗██╔╝╚══██╔══╝╚════██╗██╔════╝██╔═══██╗██║          ║
+║     ██║    ╚███╔╝    ██║    █████╔╝███████╗██║   ██║██║          ║
+║     ██║    ██╔██╗    ██║   ██╔═══╝ ╚════██║██║▄▄ ██║██║          ║
+║     ██║   ██╔╝ ██╗   ██║   ███████╗███████║╚██████╔╝███████╗     ║
+║     ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝ ╚══▀▀═╝ ╚══════╝     ║
 ║                                                                  ║
 ║              Natural Language to SQL Query Converter             ║
 ║                                                                  ║
@@ -205,9 +205,9 @@ SELECT COUNT(*) FROM customers WHERE state = 'California'
 ❯ show customer names and their order counts
 
 Generated SQL:
-SELECT customers.name, COUNT(orders.id) 
-FROM customers 
-LEFT JOIN orders ON customers.id = orders.customer_id 
+SELECT customers.name, COUNT(orders.id)
+FROM customers
+LEFT JOIN orders ON customers.id = orders.customer_id
 GROUP BY customers.name
 
 │ name          │ COUNT(orders.id) │
@@ -331,11 +331,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Found a bug?** [Open an issue](https://github.com/yourusername/Txt2SQL/issues)
+**Found a bug?** [Open an issue](https://github.com/mdskun/Txt2SQL/issues)
 
-**Have a question?** [Start a discussion](https://github.com/yourusername/Txt2SQL/discussions)
+**Have a question?** [Start a discussion](https://github.com/mdskun/Txt2SQL/discussions)
 
-**Love the project?** Give it a ⭐ on GitHub!
 
 </div>
 
@@ -346,12 +345,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### 🚀 **Ready to get started?**
 
 ```bash
-git clone https://github.com/yourusername/Txt2SQL.git
+git clone https://github.com/mdskun/Txt2SQL.git
 cd Txt2SQL
 pip install -r requirements.txt
 python txt2sql.py
 ```
-
-**Made with ❤️ and 🤖 by the Txt2SQL Team**
 
 </div>
